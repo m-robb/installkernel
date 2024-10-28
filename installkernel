@@ -1,0 +1,23 @@
+#!/bin/sh
+
+#$1=version
+#$2=zImage
+#$3=System.map
+#$4=[directory]
+
+#Tomfoolery.
+#INSTALLKERNEL="../../../../dev/null" /usr/src/linux/scripts/install.sh &> /dev/null
+
+#Save old files.
+test -f $4/vmlinuz-$1 && mv $4/vmlinuz-$1  $4/vmlinuz-$1.old 2> /dev/null
+test -f $4/System.map-$1 && mv $4/System.map-$1 $4/System.map-$1.old 2> /dev/null
+test -f $4/config-$1 && mv $4/config-$1 $4/config-$1.old 2> /dev/null
+
+#Move the new files over.
+cp /usr/src/linux/$2 $4/vmlinuz-$1
+cp /usr/src/linux/$3 $4/System.map-$1
+cp /usr/src/linux/.config $4/config-$1
+
+#Pray to whichever god you believe in that the bootnum to be updated is 0000.
+efibootmgr --quiet --bootnum 0000 --delete-bootnum
+efibootmgr --create --disk /dev/nvme0n1 --part 1 --loader vmlinuz-$1 --label gentoo --unicode root=/dev/nvme0n1p3
